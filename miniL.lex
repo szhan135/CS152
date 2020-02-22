@@ -1,109 +1,102 @@
 %{
   #include "y.tab.h"
   
-  int lineNum = 1, lineCol = 0;
+  int currLine = 1, currPos = 0;
 %}
 
 /*To define different patterns*/
 
 DIGIT [0-9]
-DIGIT_UNDERSCORE [0-9_]
-LETTER [a-zA-Z]
-LETTER_UNDERSCORE [a-zA-Z_]
+D_UNDERSCORE [0-9_]
+CHARACTERS [a-zA-Z]
+L_UNDERSCORE [a-zA-Z_]
 CHAR [0-9a-zA-Z_]
-ALPHANUMER [0-9a-zA-Z]
+IDENT [0-9a-zA-Z]
 WHITESPACE [\t ]
 NEWLINE [\n]
 
-/* Define Rules */
+/* Reserved words and special symbols part. Replace prinf with return to work with parser */
 %%
 
-"-"       return SUB; ++lineCol;
-"+"       return ADD; ++lineCol;
-"*"       return MULT; ++lineCol;
-"/"       return DIV; ++lineCol;
-"%"       return MOD; ++lineCol;
+"-"       return SUB; ++currPos;
+"+"       return ADD; ++currPos;
+"*"       return MULT; ++currPos;
+"/"       return DIV; ++currPos;
+"%"       return MOD; ++currPos;
 
-"=="      return EQ; lineCol += 2;
-"<>"      return NEQ; lineCol += 2;
-"<"       return LT; ++lineCol;
-">"       return GT; ++lineCol;
-"<="      return LTE; lineCol += 2;
-">="      return GTE; lineCol += 2;
+"=="      return EQ; currPos += 2;
+"<>"      return NEQ; currPos += 2;
+"<"       return LT; ++currPos;
+">"       return GT; ++currPos;
+"<="      return LTE; currPos += 2;
+">="      return GTE; currPos += 2;
 
-"function"     return FUNCTION; lineCol += yyleng;
-"beginparams"  return BEGIN_PARAMS; lineCol += yyleng;
-"endparams"    return END_PARAMS;  lineCol += yyleng;
-"beginlocals"  return BEGIN_LOCALS; lineCol += yyleng;
-"endlocals"    return END_LOCALS; lineCol += yyleng;
-"beginbody"    return BEGIN_BODY; lineCol += yyleng;
-"endbody"      return END_BODY; lineCol += yyleng;
-"integer"      return INTEGER; lineCol += yyleng;
-"array"        return ARRAY; lineCol += yyleng;
-"of"           return OF; lineCol += yyleng;
-"if"           return IF; lineCol += yyleng;
-"then"         return THEN; lineCol += yyleng;
-"endif"        return ENDIF; lineCol += yyleng;
-"else"         return ELSE; lineCol += yyleng;
-"while"        return WHILE; lineCol += yyleng;
-"do"           return DO; lineCol += yyleng;
-"for"      return FOR; lineCol += yyleng;
-"in"           return IN; lineCol += yyleng;
-"beginloop"    return BEGINLOOP; lineCol += yyleng;
-"endloop"      return ENDLOOP; lineCol += yyleng;
-"continue"     return CONTINUE; lineCol += yyleng;
-"read"         return READ; lineCol += yyleng;
-"write"        return WRITE; lineCol += yyleng;
-"and"          return AND; lineCol += yyleng;
-"or"           return OR; lineCol += yyleng;
-"not"          return NOT; lineCol += yyleng;
-"true"         return TRUE; lineCol += yyleng;
-"false"        return FALSE; lineCol += yyleng;
-"return"       return RETURN; lineCol += yyleng;
+"function"     return FUNCTION; currPos += yyleng;
+"beginparams"  return BEGIN_PARAMS; currPos += yyleng;
+"endparams"    return END_PARAMS;  currPos += yyleng;
+"beginlocals"  return BEGIN_LOCALS; currPos += yyleng;
+"endlocals"    return END_LOCALS; currPos += yyleng;
+"beginbody"    return BEGIN_BODY; currPos += yyleng;
+"endbody"      return END_BODY; currPos += yyleng;
+"integer"      return INTEGER; currPos += yyleng;
+"array"        return ARRAY; currPos += yyleng;
+"of"           return OF; currPos += yyleng;
+"if"           return IF; currPos += yyleng;
+"then"         return THEN; currPos += yyleng;
+"endif"        return ENDIF; currPos += yyleng;
+"else"         return ELSE; currPos += yyleng;
+"while"        return WHILE; currPos += yyleng;
+"do"           return DO; currPos += yyleng;
+"for"      	   return FOR; currPos += yyleng;
+"in"           return IN; currPos += yyleng;
+"beginloop"    return BEGINLOOP; currPos += yyleng;
+"endloop"      return ENDLOOP; currPos += yyleng;
+"continue"     return CONTINUE; currPos += yyleng;
+"read"         return READ; currPos += yyleng;
+"write"        return WRITE; currPos += yyleng;
+"and"          return AND; currPos += yyleng;
+"or"           return OR; currPos += yyleng;
+"not"          return NOT; currPos += yyleng;
+"true"         return TRUE; currPos += yyleng;
+"false"        return FALSE; currPos += yyleng;
+"return"       return RETURN; currPos += yyleng;
 
-{LETTER}({CHAR}*{ALPHANUMER}+)? {
+";"       return SEMICOLON; ++currPos;
+":"       return COLON; ++currPos;
+","       return COMMA; ++currPos;
+"("       return L_PAREN; ++currPos;
+")"       return R_PAREN; ++currPos;
+"["       return L_SQUARE_BRACKET; ++currPos;
+"]"       return R_SQUARE_BRACKET; ++currPos;
+":="      return ASSIGN; currPos += 2;
+
+{CHARACTERS}({CHAR}*{IDENT}+)? {
   yylval.valIdent = yytext;
   return IDENT;
-  lineCol += yyleng;
+  currPos += yyleng;
 	}
 
 {DIGIT}+ {
   yylval.num = atoi(yytext);
   return NUMBER;
-  lineCol += yyleng;
+  currPos += yyleng;
        }
 
-({DIGIT}+{LETTER_UNDERSCORE}{CHAR}*)|("_"{CHAR}+) {
-  printf("Error at line %d, column %d: identifier \"%s\" must begin with a letter.\n",
-	 lineNum, lineCol, yytext);
+({DIGIT}+{L_UNDERSCORE}{CHAR}*)|("_"{CHAR}+) {
+  printf("Error at line %d, column %d: identifier \"%s\" should begin with a letter.\n",
+	 currLine, currPos, yytext);
   exit(1);
 		       }
 
-{LETTER}({CHAR}*{ALPHANUMER}+)?"_" {
-  printf("Error at line %d, column %d: identifier \"%s\" cannot end with an underscore.\n",\
-	 lineNum, lineCol, yytext);
-  exit(1);
-			   }
+{CHARACTERS}({CHAR}*{IDENT}+)?"_" 	{printf("Error at line %d, column %d: identifier \"%s\" cannot end with an underscore.\n",currLine, currPos, yytext); exit(1);}
 
-";"       return SEMICOLON; ++lineCol;
-":"       return COLON; ++lineCol;
-","       return COMMA; ++lineCol;
-"("       return L_PAREN; ++lineCol;
-")"       return R_PAREN; ++lineCol;
-"["       return L_SQUARE_BRACKET; ++lineCol;
-"]"       return R_SQUARE_BRACKET; ++lineCol;
-":="      return ASSIGN; lineCol += 2;
 
-"##".*{NEWLINE} lineCol = 0; ++lineNum;
+"##".*{NEWLINE} currPos = 0; ++currLine;
 
-{WHITESPACE}+   lineCol += yyleng;
-{NEWLINE}+      lineNum += yyleng; lineCol = 0;
+{WHITESPACE}+   currPos += yyleng;
+{NEWLINE}+      currLine += yyleng; currPos = 0;
 
-. {
-  printf("Error at line %d, column %d: unrecognized symbol \"%s\" \n",
-	   lineNum, lineCol, yytext);
-  exit(1);
-}
+. 	{printf("Error at line %d, column %d: unrecognized symbol \"%s\" \n", currLine, currPos, yytext); exit(1);}
 
 %%
 int yyparse();
